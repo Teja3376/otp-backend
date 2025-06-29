@@ -25,15 +25,11 @@ exports.sendOtp = async (req, res) => {
         return res.status(400).json({ error: 'Email and name are required' });
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const hashedOtp = await bcrypt.hash(otp, 10);
 
     try {
-        await Otp.findOneAndUpdate(
-            { email },
-            { name, otp: hashedOtp, expiresAt },
-            { upsert: true, new: true }
-        );
+        await Otp.upsert({ name, email, otp: hashedOtp, expiresAt });
 
         await transporter.sendMail({
             to: email,
@@ -42,7 +38,8 @@ exports.sendOtp = async (req, res) => {
         });
         res.json({ message: 'OTP sent' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to send OTP' }); // removed details
+        console.error(error);
+        res.status(500).json({ error: 'Failed to send OTP' });
     }
 };
 
@@ -52,8 +49,8 @@ exports.verifyOtp = async (req, res) => {
         if (!email || !otp) {
             return res.status(400).json({ error: 'Email and OTP are required' });
         }
-        const record = await Otp.findOne({ email });
-        if (!record || Date.now() > record.expiresAt) {
+        const record = await Otp.findOne({ where: { email } });
+        if (!record || new Date() > record.expiresAt) { // <-- changed here
             return res.status(400).json({ error: 'Invalid or expired OTP' });
         }
         const isMatch = await bcrypt.compare(otp, record.otp);
@@ -63,7 +60,7 @@ exports.verifyOtp = async (req, res) => {
         const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     } catch (error) {
-        res.status(500).json({ error: 'Server error' }); // removed details
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
@@ -73,11 +70,11 @@ exports.getName = async (req, res) => {
         return res.status(400).json({ error: 'Email is required' });
     }
     try {
-        const record = await Otp.findOne({ email });
+        const record = await Otp.findOne({ where: { email } });
         if (!record) return res.status(404).json({ error: 'User not found' });
         res.json({ name: record.name });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch name' }); // removed details
+        res.status(500).json({ error: 'Failed to fetch name' });
     }
 };
 

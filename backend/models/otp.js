@@ -1,10 +1,11 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/dbconfig');
 
-const otpSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    otp: { type: String, required: true },
-    expiresAt: { type: Number, required: true },
+const Otp = sequelize.define('Otp', {
+    name: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    otp: { type: DataTypes.STRING, allowNull: false },
+    expiresAt: { type: DataTypes.DATE, allowNull: false }, // <-- changed here
 });
 
-module.exports = mongoose.model('Otp', otpSchema);
+module.exports = Otp;

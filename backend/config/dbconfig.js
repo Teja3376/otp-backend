@@ -1,18 +1,24 @@
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize(
+    process.env.DB_NAME || 'emailotpverify',
+    process.env.DB_USER || 'root',
+    process.env.DB_PASS || 'root',
+    {
+        host: process.env.DB_HOST || 'localhost',
+        dialect: 'mysql',
+        logging: false,
+    }
+);
 
 async function connectDB() {
-    const mongoURL = process.env.MONGO_URL || 'mongodb+srv://kcteja62892:Teja%402004@cluster0.plavaod.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-    if (!mongoURL) {
-        console.error('MongoDB connection string is missing!');
-        process.exit(1);
-    }
     try {
-        await mongoose.connect(mongoURL);
-        console.log('MongoDB connected');
+        await sequelize.authenticate();
+        console.log('MySQL connected');
     } catch (err) {
-        console.error('MongoDB connection error:', err.message);
+        console.error('MySQL connection error:', err.message);
         process.exit(1);
     }
 }
 
-module.exports = connectDB;
+module.exports = { sequelize, connectDB };
