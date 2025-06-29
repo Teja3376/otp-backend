@@ -6,7 +6,13 @@ const connectDB = require('./config/dbconfig');
 connectDB();
 
 const app = express();
-app.use(cors());
+
+// Allow only your frontend domain
+app.use(cors({
+    origin: 'https://otp-frontend-production.up.railway.app',
+    credentials: true, // if you use cookies or authentication headers
+}));
+
 app.use(express.json());
 
 const otpRoutes = require('./routes/otpRoutes');
